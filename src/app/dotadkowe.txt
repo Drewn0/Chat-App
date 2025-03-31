@@ -1,0 +1,233 @@
+{"session_id":"26-72-63-209","status":"ok"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const hangup = () => {
+        setDisplay("Hanging up...");
+        setCalling(false);
+    }
+    const delete_Click = () => {
+        setDisplay("");
+    };
+
+    const append_Click = (value) => {
+        if (display.slice(0, 1) == 'C' || display.slice(0, 1) == 'H') {
+            setDisplay("");
+        } else {
+            setDisplay(display + value);
+        }
+    };
+
+
+
+
+import React, { useEffect } from 'react';
+import { Grid2, Button, TextField, Box } from "@mui/material";
+import { useState } from "react";
+import io from 'socket.io-client';
+let sckt
+
+export default function Numpad() {
+    const [display, setDisplay] = useState("");
+    const [Calling, setCalling] = useState(false);
+    const [socket, setSocket] = useState(null);
+    const [sessionId, setSessionId] = useState(null);
+    const [say, setSay] = useState('');
+
+    const append_Click = (value) => {
+        if (display.slice(0, 1) == 'C' || display.slice(0, 1) == 'H') {
+            setDisplay("");
+        } else {
+            setDisplay(display + value);
+        }
+    };
+
+    useEffect(() => socketInitializer(), []);
+
+    const socketInitializer = () => {
+        sckt = io()
+        sckt.on('connect', () => {
+            console.log('connected')
+        })
+        
+        sckt.on('call', (data) => {
+            if(data['status'] == 'ok') {
+                console.log('call event received: ', data['session_id']) 
+                setSessionId(data['session_id'])
+                setDisplay("Calling...");
+                setCalling(true);
+                    console.log('call', data)
+            } else {
+                setDisplay("Call failed " + data['status']);
+                console.log('call failed', data['status'])
+            }
+        })
+
+        sckt.on('hangup', (data) => {
+            console.log('hangup event received: ')
+            setSessionId(null)
+            setDisplay("");
+            setCalling(false);
+            console.log('hangup', data)  
+        })
+
+        sckt.on('say', (data) => {
+            console.log('say event received: ', data)
+        })
+        setSocket(sckt)
+
+        return () => {
+            sckt.disconnect()
+        }
+    }
+
+    
+
+
+    return (
+        <Box sx={{ border: "2px solid #1976D2", paddingTop: 2 }}>
+            <Grid2 colums="1" container="false" direction="column">
+                <TextField 
+                    id="outline-basic" 
+                    label="Wpisz numer" 
+                    variant="outlined" 
+                    value={display} 
+                    sx={{ input: { color: "#1976D2" }, marginBottom: 2 }}
+                    InputLabelProps={{
+                        style: { color: '#1976D2' }}}
+                />
+                <Grid2 colums="3" container="true" direction="rows" sx={{ borderTop: "2px solid #1976D2", padding: 2 }}>
+                    <Grid2 colums="3" container="true" direction="column">
+                        <Button onClick={() => {
+                            append_Click("1")
+                        }}>1</Button>
+                        <Button onClick={() => {
+                            append_Click("4")
+                        }}>4</Button>
+                        <Button onClick={() => {
+                            append_Click("7")
+                        }}>7</Button>
+                        <Button onClick={() => {
+                            append_Click("*")
+                        }}>*</Button>
+                        <Button onClick={() => {
+                            call();
+                        }} disabled={Calling}>Call</Button>
+                    </Grid2>
+                    <Grid2 colums="3" container="true" direction="column">
+                        <Button onClick={() => {
+                            append_Click("2")
+                        }}>2</Button>
+                        <Button onClick={() => {
+                            append_Click("5")
+                        }}>5</Button>
+                        <Button onClick={() => {
+                            append_Click("8")
+                        }}>8</Button>
+                        <Button onClick={() => {
+                            append_Click("0")
+                        }}>0</Button>
+                        <Button onClick={() => {
+                            hangup();
+                        }} disabled={!Calling}>Hangup</Button>
+                    </Grid2>
+                    <Grid2 colums="3" container="true" direction="column">
+                        <Button onClick={() => {
+                            append_Click("3")
+                        }}>3</Button>
+                        <Button onClick={() => {
+                            append_Click("6")
+                        }}>6</Button>
+                        <Button onClick={() => {
+                            append_Click("9")
+                        }}>9</Button>
+                        <Button onClick={() => {
+                            append_Click("#")
+                        }}>#</Button>
+                        <Button onClick={() => {
+                            delete_Click();
+                        }}>Delete</Button>
+                    </Grid2>
+                    <Grid2 
+                        colums="3" 
+                        container="true" 
+                        direction="row" 
+                        justifyContent={"center"}
+                        paddingLeft={2}
+                    >
+                        <Button onClick={() => {
+                            append_Click("+")
+                        }}>+</Button>
+                    </Grid2>
+                </Grid2>
+            </Grid2>
+        </Box>
+    )
+}
+
